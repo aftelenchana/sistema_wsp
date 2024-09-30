@@ -123,10 +123,11 @@ const main = async () => {
     });
 
     // Usa el puerto proporcionado por Render
-    const PORT = process.env.PORT || 10000;
+    const PORT = process.env.PORT || 3000;
     server.listen(PORT, () => {
         console.log(`Servidor HTTPS corriendo en el puerto ${PORT}`);
     });
 };
 
 main();
+  
