@@ -1,11 +1,10 @@
-
-const http = require('http');
+const https = require('https');
 const { createBot, createProvider, createFlow, addKeyword } = require('@bot-whatsapp/bot');
 const QRPortalWeb = require('@bot-whatsapp/portal');
 const BaileysProvider = require('@bot-whatsapp/provider/baileys');
 const MockAdapter = require('@bot-whatsapp/database/mock');
 
-const flowSecundario = addKeyword(['2', 'siguiente']).addAnswer(['📄 Aquí tenemos el flujo secundario'])
+const flowSecundario = addKeyword(['2', 'siguiente']).addAnswer(['📄 Aquí tenemos el flujo secundario']);
 
 const flowDocs = addKeyword(['doc', 'documentacion', 'documentación']).addAnswer(
     [
@@ -16,7 +15,7 @@ const flowDocs = addKeyword(['doc', 'documentacion', 'documentación']).addAnswe
     null,
     null,
     [flowSecundario]
-)
+);
 
 const flowTuto = addKeyword(['telenchana_ii', 'telenchana_uu']).addAnswer(
     [
@@ -27,7 +26,7 @@ const flowTuto = addKeyword(['telenchana_ii', 'telenchana_uu']).addAnswer(
     null,
     null,
     [flowSecundario]
-)
+);
 
 const flowGracias = addKeyword(['gg_kk_oo', 'oo_kk_ll']).addAnswer(
     [
@@ -40,14 +39,14 @@ const flowGracias = addKeyword(['gg_kk_oo', 'oo_kk_ll']).addAnswer(
     null,
     null,
     [flowSecundario]
-)
+);
 
 const flowDiscord = addKeyword(['discord']).addAnswer(
     ['🤪 Únete al discord', 'https://link.codigoencasa.com/DISCORD', '\n*2* Para siguiente paso.'],
     null,
     null,
     [flowSecundario]
-)
+);
 
 const flowPrincipal = addKeyword(['ff_ee', 'yy_rr', 'hh_ll'])
     .addAnswer('🙌 Hola bienvenido a este *Chatbot*')
@@ -61,8 +60,7 @@ const flowPrincipal = addKeyword(['ff_ee', 'yy_rr', 'hh_ll'])
         null,
         null,
         [flowDocs, flowGracias, flowTuto, flowDiscord]
-    )
-
+    );
 
 const main = async () => {
     const adapterDB = new MockAdapter();
@@ -77,8 +75,8 @@ const main = async () => {
 
     QRPortalWeb();
 
-    // Crear un servidor HTTP para manejar solicitudes POST
-    const server = http.createServer((req, res) => {
+    // Crear un servidor HTTPS
+    const server = https.createServer((req, res) => {
         console.log('Solicitud recibida:', req.method, req.url);
         if (req.method === 'POST' && req.url === '/send-message') {
             let body = '';
@@ -91,25 +89,24 @@ const main = async () => {
                 try {
                     const { number, message } = JSON.parse(body);
                     const formattedNumber = `${number}@s.whatsapp.net`;
-            
-                 // Extraer todas las URLs de imágenes del mensaje
-const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|pdf|xml|mp4))/ig;
-const urlMatches = message.match(urlRegex);
-const textWithoutUrls = message.replace(urlRegex, '').trim();
 
-// Enviar texto primero si hay texto aparte de las URLs
-if (textWithoutUrls) {
-    await adapterProvider.sendText(formattedNumber, textWithoutUrls);
-}
+                    // Extraer todas las URLs de imágenes del mensaje
+                    const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|pdf|xml|mp4))/ig;
+                    const urlMatches = message.match(urlRegex);
+                    const textWithoutUrls = message.replace(urlRegex, '').trim();
 
-// Luego, si hay URLs de imagen, enviar cada imagen
-if (urlMatches && urlMatches.length > 0) {
-    for (const imageUrl of urlMatches) {
-        await adapterProvider.sendMedia(formattedNumber, imageUrl); // Asegúrate de que este método es correcto según tu proveedor
-    }
-}
+                    // Enviar texto primero si hay texto aparte de las URLs
+                    if (textWithoutUrls) {
+                        await adapterProvider.sendText(formattedNumber, textWithoutUrls);
+                    }
 
-            
+                    // Luego, si hay URLs de imagen, enviar cada imagen
+                    if (urlMatches && urlMatches.length > 0) {
+                        for (const imageUrl of urlMatches) {
+                            await adapterProvider.sendMedia(formattedNumber, imageUrl); // Asegúrate de que este método es correcto según tu proveedor
+                        }
+                    }
+
                     res.writeHead(200, { 'Content-Type': 'application/json' });
                     res.end(JSON.stringify({ success: true, message: 'Mensaje y/o imagen enviados' }));
                 } catch (error) {
@@ -118,15 +115,17 @@ if (urlMatches && urlMatches.length > 0) {
                     res.end(JSON.stringify({ success: false, error: error.message }));
                 }
             });
-            
+
         } else {
             res.writeHead(404, { 'Content-Type': 'application/json' });
             res.end(JSON.stringify({ error: 'Not found' }));
         }
     });
 
-    server.listen(3001, () => {
-        console.log('Servidor HTTP corriendo en el puerto 3001');
+    // Usa el puerto proporcionado por Render
+    const PORT = process.env.PORT || 10000;
+    server.listen(PORT, () => {
+        console.log(`Servidor HTTPS corriendo en el puerto ${PORT}`);
     });
 };
 
